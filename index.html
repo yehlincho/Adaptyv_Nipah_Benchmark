@@ -454,12 +454,14 @@
             for (let i = 0; i <= 10; i++) {
                 const val = (i / 10).toFixed(1);
                 const x = padding + (i / 10) * plotWidth;
-                const y = height - padding + (i / 10) * plotHeight;
+                const y = height - padding - (i / 10) * plotHeight;
                 
+                // X-axis labels (bottom)
                 ctx.fillText(val, x, height - padding + 20);
                 
+                // Y-axis labels (left side)
                 ctx.textAlign = 'right';
-                ctx.fillText((1 - i / 10).toFixed(1), padding - 10, y + 5);
+                ctx.fillText(val, padding - 10, y + 5);
                 ctx.textAlign = 'center';
             }
 
