@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Protein Design Results - ipSAE & ipTM Comparison</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Space Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+        .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+    </style>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen p-6">
+    <div class="max-w-[1800px] mx-auto">
+        <div class="mb-8">
+            <h1 class="text-5xl font-bold text-white mb-3 tracking-tight">Protein Design Results</h1>
+            <p class="text-xl text-purple-200">Interactive comparison of AF3 vs Boltz2 predictions</p>
+        </div>
+        
+        <div class="mb-6 flex gap-3 items-center flex-wrap">
+            <input type="file" id="fileInput" accept=".csv" class="hidden">
+            <button id="uploadBtn" class="flex items-center gap-2 px-6 py-3 bg-purple-600 text-white rounded-lg hover:bg-purple-700 transition-all shadow-lg hover:shadow-xl font-semibold">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                    <polyline points="17 8 12 3 7 8"></polyline>
+                    <line x1="12" y1="3" x2="12" y2="15"></line>
+                </svg>
+                Upload CSV
+            </button>
+            
+            <button id="downloadBtn" class="flex items-center gap-2 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-all shadow-lg hover:shadow-xl font-semibold">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-15"></path>
+                    <polyline points="7 10 12 15 17 10"></polyline>
+                    <line x1="12" y1="15" x2="12" y2="3"></line>
+                </svg>
+                Download CSV
+            </button>
+            
+            <div id="dataCount" class="ml-auto bg-slate-800 px-5 py-3 rounded-lg shadow-lg hidden border border-purple-500/30">
+                <p class="text-sm text-purple-200">
+                    <span id="countValue" class="font-bold text-purple-300 text-lg">0</span> data points
+                </p>
+            </div>
+        </div>
+        
+        <div id="errorBox" class="mb-6 p-4 bg-red-900/50 border-l-4 border-red-500 rounded-lg shadow-lg hidden backdrop-blur">
+            <p class="text-sm text-red-200 font-medium">⚠ <span id="errorText"></span></p>
+        </div>
+        
+        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
+            <div class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-6 border border-purple-500/20">
+                <h3 class="text-xl font-bold text-white mb-4 text-center">ipSAE Comparison</h3>
+                <canvas id="ipsaeCanvas" width="700" height="700" class="border border-slate-700 rounded-lg bg-slate-900/50"></canvas>
+            </div>
+
+            <div class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-6 border border-purple-500/20">
+                <h3 class="text-xl font-bold text-white mb-4 text-center">ipTM Comparison</h3>
+                <canvas id="iptmCanvas" width="700" height="700" class="border border-slate-700 rounded-lg bg-slate-900/50"></canvas>
+            </div>
+        </div>
+
+        <div class="mb-6">
+            <div id="detailsPanel" class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-10 text-center border border-purple-500/20">
+                <div class="mb-4 text-purple-400/50">
+                    <svg class="w-24 h-24 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-semibold text-purple-200 mb-2">No Point Selected</h3>
+                <p class="text-purple-300/70">Click on any data point in either plot to view its details</p>
+            </div>
+        </div>
+
+        <div class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-6 border border-purple-500/20">
+            <h3 class="text-lg font-bold text-white mb-4">📊 How to Use</h3>
+            <div class="grid md:grid-cols-2 gap-4 text-sm text-purple-200">
+                <div class="flex items-start gap-3">
+                    <span class="text-purple-400 font-bold">•</span>
+                    <span><strong class="text-white">Hover</strong> over points to highlight them</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-purple-400 font-bold">•</span>
+                    <span><strong class="text-white">Click</strong> on any point to view details</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-purple-400 font-bold">•</span>
+                    <span><strong class="text-white">Upload CSV</strong> to load your own data</span>
+                </div>
+                <div class="flex items-start gap-3">
+                    <span class="text-purple-400 font-bold">•</span>
+                    <span><strong class="text-white">Download CSV</strong> to export current dataset</span>
+                </div>
+            </div>
+            <p class="mt-4 text-xs text-purple-300/60 italic">
+                The diagonal lines represent perfect agreement between AF3 and Boltz2 predictions
+            </p>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script>
+        // State
+        let data = [];
+        let selectedPoint = null;
+        let hoveredPoint = null;
+        let activeCanvas = null; // Track which canvas was clicked
+
+        // DOM elements
+        const ipsaeCanvas = document.getElementById('ipsaeCanvas');
+        const ipsaeCtx = ipsaeCanvas.getContext('2d');
+        const iptmCanvas = document.getElementById('iptmCanvas');
+        const iptmCtx = iptmCanvas.getContext('2d');
+        const fileInput = document.getElementById('fileInput');
+        const uploadBtn = document.getElementById('uploadBtn');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const errorBox = document.getElementById('errorBox');
+        const errorText = document.getElementById('errorText');
+        const dataCount = document.getElementById('dataCount');
+        const countValue = document.getElementById('countValue');
+        const detailsPanel = document.getElementById('detailsPanel');
+
+        // Sample data with NaN fixed
+        const sampleData = JSON.parse([
+  {"id":"noble-swan-clay","name":"design_16","sequence":"QLVGALRRLAEAARELGEAAAKVIKYLAKAIDAETEEEAEEYREKAVEALEAFREAAVAALEAAAEALRAAAELAKDEEVKKALEEVAELVEEVREEVEAILEQLIEVAKKAGKEEMPEVLKAFAELVAAVTMALAYALRAALSAASAVGDEEAVEAALEAAEALVDALIEVANAVVEELNKAKTEEAKEALKYAAVAVVEAQQAVADSLNRTYWRNSRL","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.916855,"boltz2_iptm":0.9620020389556885,"af3_ipsae":0.717528,"af3_iptm":0.88},
+  {"id":"azure-tiger-marble","name":"GVGMWPVGLVVGL","sequence":"GVGMWPVGLVVGL","designMethod":null,"author":"junlong-liu","boltz2_ipsae":0.91417,"boltz2_iptm":0.9660906195640564,"af3_ipsae":0.0,"af3_iptm":0.33},
+  {"id":"young-ram-cloud","name":"N237_batch_17_121_5","sequence":"EEELIKEYEEKEKEEIEKLLEEMLELLEELAKAAPKLSAEGVKYVQNAAASAREGVETLKELWPLSPSTAVSQLRFHVSVVRRHKKLALAHTGGAGAEAKAIAEEAAEEVRRALEEFKK","designMethod":null,"author":"hanjun3000","boltz2_ipsae":0.883965,"boltz2_iptm":0.9266466498374939,"af3_ipsae":0.72977,"af3_iptm":0.85},
+  {"id":"golden-owl-fern","name":"brisk2","sequence":"DPEKQRIRDEILDIADNSSLEEIKAIAEAIERVLYFEAPNSPETKEILDILDEALKAETKEEAKALLRKALDKIAEHYSLPVLERILREVKRVAEEAK","designMethod":"boltzgen-id-pipeline-8O51Y_zzcm","author":"niki-iva","boltz2_ipsae":0.845811,"boltz2_iptm":0.9265350103378296,"af3_ipsae":0.789749,"af3_iptm":0.89},
+  {"id":"green-bear-sand","name":"8XPY_r1_2445_25","sequence":"SLRDALLAEIERLEKRTEGDEEAAGRLATIKRLLDSYGDKDSVLNIAYQNLRLLYERYFPEEADAFAERIAAANAADRA","designMethod":null,"author":"resh","boltz2_ipsae":0.845621,"boltz2_iptm":0.9480735659599304,"af3_ipsae":0.793164,"af3_iptm":0.92},
+  {"id":"young-raven-lava","name":"seq1","sequence":"STIEILRKYMDWEMTNPDPHDNGNDRLHEHEKAVVDAMKNGQVTTPAAFMAMYVATMTKYPGVTAAQVISEYLIWLSEFLHWTGMPP","designMethod":null,"author":"plato-hunt","boltz2_ipsae":0.845319,"boltz2_iptm":0.9457511305809021,"af3_ipsae":0.012067,"af3_iptm":0.48},
+  {"id":"solid-fox-iron","name":"2vsm_and_rank06_2vsm-bzgen_nfbd3rb_964-refine_20_0_model_0","sequence":"ETVLEAIRIALRGFGMSEKKVDEVVELLRKGEYDRALNLVAISVPEMRSKAVVDLVEALLEGKFDEAIAILEEGFPLNLPEAAARVRELLA","designMethod":"boltzgen","author":"pansapiens","boltz2_ipsae":0.845274,"boltz2_iptm":0.9279040098190308,"af3_ipsae":0.551913,"af3_iptm":0.76},
+  {"id":"shy-bee-bronze","name":"protein_0_energy_15.95","sequence":"MAVKRDSVTKWCWGVLMLLCRTVISKGIVLPPIYWNPSNPKFQPGHGLVLYPQIGDKLDIICPKADSKTVGQDEYYKVFMVDKDQADLCTVKKENPLLNCAKPDGDIKFTIKFQEFSPNLWGLEFRKGKDYYFISTSNGSLEGLKNQEGGVCQTRNMKLLVKVGQDASAAGSTRNKDPVRVPELGPTGRSTTSPNGKPPPSSSSDGNSGGHSFSRSLSEVAAVAGISTGVINFIV","designMethod":"dsm-synteract","author":"jason-gleghorn","boltz2_ipsae":0.845175,"boltz2_iptm":0.8893367052078247,"af3_ipsae":0.0,"af3_iptm":0.16},
+  {"id":"swift-jaguar-cedar","name":"GLHHGLLANPHSGH","sequence":"GLHHGLLANPHSGH","designMethod":null,"author":"pill4monkey","boltz2_ipsae":0.844766,"boltz2_iptm":0.9616991877555847,"af3_ipsae":0.0,"af3_iptm":0.4},
+  {"id":"strong-ant-wave","name":"mellow3","sequence":"SAQAALDRVLDALEEAIKNTKNPEVKKELQRLLFNLLALYGTPEQKIEYALEKLRELLKKYPDDENIHRALAVVEEALAAVK","designMethod":"boltzgen-id-pipeline-8O51Y_zzcm","author":"niki-iva","boltz2_ipsae":0.84385,"boltz2_iptm":0.9369975924491882,"af3_ipsae":0.012292,"af3_iptm":0.54},
+  {"id":"crimson-seal-cedar","name":"NiVG_Binder_42_DivyanB","sequence":"MTYVIDLKGTSGRHKGNTFTVRVTDNSTVRQLEWQIEAITRDKVERILVNGKELRDDETLGSLKDGDVVIVETDGSVFEGTVTIV","designMethod":"boltzgen","author":"divyan-bavan","boltz2_ipsae":0.843843,"boltz2_iptm":0.9381635785102844,"af3_ipsae":0.766672,"af3_iptm":0.87},
+  {"id":"golden-bison-reed","name":"sequence_IFILTER_24","sequence":"EEELIAAYEARRQAELAALQAKIDELLALLDELGASKYAKLRTELKDEFAAAKEDPRLRIFLDGVVDRYIKELKAELAAATA","designMethod":"rfdiffusion-full-partial-pmpnn-af-boltz-valid-rosetta-filtering-ptpKPMSZsV","author":"max-beining","boltz2_ipsae":0.843788,"boltz2_iptm":0.9358406066894531,"af3_ipsae":0.798416,"af3_iptm":0.89},
+  {"id":"gentle-bison-marble","name":"design_15","sequence":"SDEELAVEISQLIVEINGLLAQVAAYVARIEASALALLYGKDNPKVKEWGELAVRLAQDIADAALWQAKREARKILRAVKAGNGPEANQKGVELLKLQVEFLEAAVEAALAVADLALKGLEDKENRKEYARATDLAAKAALLVLAAAAKWGPSPELTEALRYVAEAAREGLETGNAVELAEEALEAVEEVVWENWDEWGGWGGGYWGFRGHLALLDMLPL","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.843558,"boltz2_iptm":0.9349384903907776,"af3_ipsae":0.667776,"af3_iptm":0.85},
+  {"id":"golden-seal-thorn","name":"final_design_8","sequence":"SAADVQAEREAKFEEGVKLVREGVELAKSGKVSGEEAGEIAYKGVELMREADGSGELTIELSLARKAAEGARNVDKDGEKGLEIAVTNAEQLGKLLGIPPQ","designMethod":"protein-hunter-lTFCU0CjiQ","author":"esputnam","boltz2_ipsae":0.88165,"boltz2_iptm":0.9324806928634644,"af3_ipsae":0.732106,"af3_iptm":0.85},
+  {"id":"quiet-crane-lava","name":"design0","sequence":"SLAALAAALADALRALLAALSPAEAATVARAIAAASLTSPAGRLDVLALNRAAALAAAGDREAAAETAAAAARAALLAAKNDFEAGTTAADLVNGVAAGLSRIPSVPAEAVAIAKEAAKEAEKAAMEGDALKALRIAAEGLARAAALIAA","designMethod":"boltzgen","author":"contact-crafter","boltz2_ipsae":0.84331,"boltz2_iptm":0.9255475997924805,"af3_ipsae":0.851767,"af3_iptm":0.92},
+  {"id":"jade-ox-rose","name":"E2SC","sequence":"MLEELKERLEALLNSYKPKLIETLTKIDEGKLAPLSIYSVLNPLDLEIVKILVEAGFSEEEAKEIVSEAFDRTELKMSKISHTLSNEEYVEEFLRTLLEEIMKLVEEKLK","designMethod":null,"author":"tadej","boltz2_ipsae":0.843155,"boltz2_iptm":0.9297827482223511,"af3_ipsae":0.751972,"af3_iptm":0.88},
+  {"id":"deep-heron-cedar","name":"GAGHHHALLHRP","sequence":"GAGHHHALLHRP","designMethod":null,"author":"624465921","boltz2_ipsae":0.843096,"boltz2_iptm":0.9538766741752625,"af3_ipsae":0.013746,"af3_iptm":0.45},
+  {"id":"dark-bear-frost","name":"N1029","sequence":"EEELIAEYEARRAAELAALAAEIAELKALIAKLGEAKYASLIAQLDDEFAAAQEDPRLRIFLRAVVKLHIKRLKAELAAAGL","designMethod":null,"author":"driegerdesign","boltz2_ipsae":0.842861,"boltz2_iptm":0.9406288862228394,"af3_ipsae":0.802063,"af3_iptm":0.9},
+  {"id":"jade-swan-thorn","name":"design_23","sequence":"EELAAAIEALIQAAAALSNEPEEVRLALTEYLEALIGELPEAIAKAIAGVLNEEEEEEAKVLERALAAAATAYNEAPELKEMVEELLKQITAPIQPTVKLAIKGLGAEAERGVKAALQIAATLANALPEIEAKLQEAKETLKPEAEQKMVELQEELEESVRQLLEAQLELEAPEDAELSELSKELKDAFEAEIAKAAEAVPAEVAAALEKLVEQAKEANPAPEAAAEELKSLLEAALAEKKKGKQGKKGK","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.842813,"boltz2_iptm":0.9219002723693848,"af3_ipsae":0.667067,"af3_iptm":0.82},
+  {"id":"swift-lion-pine","name":"c13_B","sequence":"MQIFVVTPDGKTFEIEVEPSDTLLNVVEKVEKEHGYGNQFVAAVEFAGKVYPLSKTLSEMGIQKGSTLHFLAG","designMethod":"boltzgen-id-pipeline-_rUcc_6Mw-","author":"niki-iva","boltz2_ipsae":0.840977,"boltz2_iptm":0.9342098832130432,"af3_ipsae":0.0,"af3_iptm":0.16}
+]
+);
+
+        // Initialize
+        function init() {
+            data = sampleData;
+            updateUI();
+            drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
+            drawPlot(iptmCanvas, iptmCtx, 'iptm');
+        }
+
+        function updateUI() {
+            if (data.length > 0) {
+                dataCount.classList.remove('hidden');
+                countValue.textContent = data.length;
+            } else {
+                dataCount.classList.add('hidden');
+            }
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorBox.classList.remove('hidden');
+            setTimeout(() => errorBox.classList.add('hidden'), 5000);
+        }
+
+        // Drawing functions
+        function drawPlot(canvas, ctx, metric) {
+            const width = canvas.width;
+            const height = canvas.height;
+            const padding = 80;
+            const plotWidth = width - 2 * padding;
+            const plotHeight = height - 2 * padding;
+
+            // Clear
+            ctx.fillStyle = '#0f172a';
+            ctx.fillRect(0, 0, width, height);
+
+            // Draw grid
+            ctx.strokeStyle = '#334155';
+            ctx.lineWidth = 1;
+            for (let i = 0; i <= 10; i++) {
+                const x = padding + (i / 10) * plotWidth;
+                const y = padding + (i / 10) * plotHeight;
+                
+                ctx.beginPath();
+                ctx.moveTo(x, padding);
+                ctx.lineTo(x, height - padding);
+                ctx.stroke();
+
+                ctx.beginPath();
+                ctx.moveTo(padding, y);
+                ctx.lineTo(width - padding, y);
+                ctx.stroke();
+            }
+
+            // Draw diagonal line (perfect agreement)
+            ctx.strokeStyle = '#6366f1';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([5, 5]);
+            ctx.beginPath();
+            ctx.moveTo(padding, height - padding);
+            ctx.lineTo(width - padding, padding);
+            ctx.stroke();
+            ctx.setLineDash([]);
+
+            // Draw axes
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.moveTo(padding, padding);
+            ctx.lineTo(padding, height - padding);
+            ctx.lineTo(width - padding, height - padding);
+            ctx.stroke();
+
+            // Draw axis labels
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = 'bold 16px Space Grotesk';
+            ctx.textAlign = 'center';
+            ctx.fillText(`AF3 ${metric === 'ipsae' ? 'ipSAE' : 'ipTM'}`, width / 2, height - 30);
+            
+            ctx.save();
+            ctx.translate(30, height / 2);
+            ctx.rotate(-Math.PI / 2);
+            ctx.fillText(`Boltz2 ${metric === 'ipsae' ? 'ipSAE' : 'ipTM'}`, 0, 0);
+            ctx.restore();
+
+            // Draw tick labels
+            ctx.font = '12px JetBrains Mono';
+            ctx.textAlign = 'center';
+            for (let i = 0; i <= 10; i++) {
+                const val = (i / 10).toFixed(1);
+                const x = padding + (i / 10) * plotWidth;
+                const y = height - padding + (i / 10) * plotHeight;
+                
+                ctx.fillText(val, x, height - padding + 20);
+                
+                ctx.textAlign = 'right';
+                ctx.fillText((1 - i / 10).toFixed(1), padding - 10, y + 5);
+                ctx.textAlign = 'center';
+            }
+
+            // Draw data points
+            data.forEach((point, idx) => {
+                const isHovered = hoveredPoint !== null && hoveredPoint.index === idx && hoveredPoint.canvas === canvas.id;
+                const isSelected = selectedPoint === idx;
+                
+                let af3Val, boltz2Val;
+                if (metric === 'ipsae') {
+                    af3Val = point.af3_ipsae;
+                    boltz2Val = point.boltz2_ipsae;
+                } else {
+                    af3Val = point.af3_iptm;
+                    boltz2Val = point.boltz2_iptm;
+                }
+
+                const px = padding + af3Val * plotWidth;
+                const py = height - padding - boltz2Val * plotHeight;
+
+                // Draw point
+                ctx.beginPath();
+                ctx.arc(px, py, isSelected ? 10 : (isHovered ? 8 : 5), 0, 2 * Math.PI);
+                
+                if (isSelected) {
+                    ctx.fillStyle = '#fbbf24';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 3;
+                    ctx.stroke();
+                } else if (isHovered) {
+                    ctx.fillStyle = '#a78bfa';
+                    ctx.fill();
+                    ctx.strokeStyle = '#fff';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                } else {
+                    ctx.fillStyle = '#8b5cf6';
+                    ctx.fill();
+                }
+            });
+        }
+
+        // Event handlers
+        function handleCanvasClick(canvas, e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            // Scale for high DPI
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const canvasX = x * scaleX;
+            const canvasY = y * scaleY;
+
+            const padding = 80;
+            const plotWidth = canvas.width - 2 * padding;
+            const plotHeight = canvas.height - 2 * padding;
+
+            let clickedIndex = null;
+            let minDist = Infinity;
+            const metric = canvas.id === 'ipsaeCanvas' ? 'ipsae' : 'iptm';
+
+            data.forEach((point, idx) => {
+                let af3Val, boltz2Val;
+                if (metric === 'ipsae') {
+                    af3Val = point.af3_ipsae;
+                    boltz2Val = point.boltz2_ipsae;
+                } else {
+                    af3Val = point.af3_iptm;
+                    boltz2Val = point.boltz2_iptm;
+                }
+
+                const px = padding + af3Val * plotWidth;
+                const py = canvas.height - padding - boltz2Val * plotHeight;
+                const dist = Math.sqrt((canvasX - px) ** 2 + (canvasY - py) ** 2);
+
+                if (dist < 15 && dist < minDist) {
+                    minDist = dist;
+                    clickedIndex = idx;
+                }
+            });
+
+            if (clickedIndex !== null) {
+                selectedPoint = clickedIndex;
+                activeCanvas = canvas.id;
+                showDetails(clickedIndex);
+                drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
+                drawPlot(iptmCanvas, iptmCtx, 'iptm');
+            }
+        }
+
+        function handleCanvasMove(canvas, e) {
+            const rect = canvas.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+
+            const scaleX = canvas.width / rect.width;
+            const scaleY = canvas.height / rect.height;
+            const canvasX = x * scaleX;
+            const canvasY = y * scaleY;
+
+            const padding = 80;
+            const plotWidth = canvas.width - 2 * padding;
+            const plotHeight = canvas.height - 2 * padding;
+
+            let hoveredIndex = null;
+            let minDist = Infinity;
+            const metric = canvas.id === 'ipsaeCanvas' ? 'ipsae' : 'iptm';
+
+            data.forEach((point, idx) => {
+                let af3Val, boltz2Val;
+                if (metric === 'ipsae') {
+                    af3Val = point.af3_ipsae;
+                    boltz2Val = point.boltz2_ipsae;
+                } else {
+                    af3Val = point.af3_iptm;
+                    boltz2Val = point.boltz2_iptm;
+                }
+
+                const px = padding + af3Val * plotWidth;
+                const py = canvas.height - padding - boltz2Val * plotHeight;
+                const dist = Math.sqrt((canvasX - px) ** 2 + (canvasY - py) ** 2);
+
+                if (dist < 15 && dist < minDist) {
+                    minDist = dist;
+                    hoveredIndex = idx;
+                }
+            });
+
+            hoveredPoint = hoveredIndex !== null ? { index: hoveredIndex, canvas: canvas.id } : null;
+            canvas.style.cursor = hoveredIndex !== null ? 'pointer' : 'default';
+            drawPlot(canvas, canvas.getContext('2d'), metric);
+        }
+
+        function showDetails(index) {
+            const point = data[index];
+            detailsPanel.innerHTML = `
+                <button onclick="clearSelection()" class="absolute top-4 right-4 text-purple-400 hover:text-purple-200 transition-colors">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                
+                <h2 class="text-3xl font-bold mb-6 text-white pr-8">Protein Details</h2>
+                
+                <div class="space-y-4 text-left">
+                    <div class="border-b border-slate-700 pb-3">
+                        <span class="text-sm font-semibold text-purple-400 uppercase">Name</span>
+                        <p class="text-xl text-purple-100 mt-1 font-semibold">${point.name}</p>
+                    </div>
+                    
+                    <div class="border-b border-slate-700 pb-3">
+                        <span class="text-sm font-semibold text-purple-400 uppercase">ID</span>
+                        <p class="text-purple-200 mt-1 mono">${point.id}</p>
+                    </div>
+                    
+                    <div class="border-b border-slate-700 pb-3">
+                        <span class="text-sm font-semibold text-purple-400 uppercase">Design Method</span>
+                        <p class="text-purple-200 mt-1">${point.designMethod || 'Unknown'}</p>
+                    </div>
+                    
+                    <div class="border-b border-slate-700 pb-3">
+                        <span class="text-sm font-semibold text-purple-400 uppercase">Author</span>
+                        <p class="text-purple-200 mt-1">${point.author}</p>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="bg-blue-900/30 p-4 rounded-lg border border-blue-500/30">
+                            <span class="text-sm font-semibold text-blue-300">AF3 ipSAE</span>
+                            <p class="text-3xl font-bold text-blue-100 mt-1 mono">
+                                ${point.af3_ipsae.toFixed(3)}
+                            </p>
+                        </div>
+                        
+                        <div class="bg-purple-900/30 p-4 rounded-lg border border-purple-500/30">
+                            <span class="text-sm font-semibold text-purple-300">Boltz2 ipSAE</span>
+                            <p class="text-3xl font-bold text-purple-100 mt-1 mono">
+                                ${point.boltz2_ipsae.toFixed(3)}
+                            </p>
+                        </div>
+
+                        <div class="bg-cyan-900/30 p-4 rounded-lg border border-cyan-500/30">
+                            <span class="text-sm font-semibold text-cyan-300">AF3 ipTM</span>
+                            <p class="text-3xl font-bold text-cyan-100 mt-1 mono">
+                                ${point.af3_iptm.toFixed(2)}
+                            </p>
+                        </div>
+                        
+                        <div class="bg-pink-900/30 p-4 rounded-lg border border-pink-500/30">
+                            <span class="text-sm font-semibold text-pink-300">Boltz2 ipTM</span>
+                            <p class="text-3xl font-bold text-pink-100 mt-1 mono">
+                                ${point.boltz2_iptm.toFixed(2)}
+                            </p>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <span class="text-sm font-semibold text-purple-400 uppercase">Sequence</span>
+                        <div class="mt-2 p-4 bg-slate-900/70 rounded-lg border border-slate-700 max-h-48 overflow-y-auto">
+                            <p class="text-xs mono text-purple-200 break-all leading-relaxed">
+                                ${point.sequence}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+            detailsPanel.classList.remove('text-center');
+            detailsPanel.classList.add('relative');
+        }
+
+        function clearSelection() {
+            selectedPoint = null;
+            activeCanvas = null;
+            detailsPanel.innerHTML = `
+                <div class="mb-4 text-purple-400/50">
+                    <svg class="w-24 h-24 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <h3 class="text-2xl font-semibold text-purple-200 mb-2">No Point Selected</h3>
+                <p class="text-purple-300/70">Click on any data point in either plot to view its details</p>
+            `;
+            detailsPanel.classList.add('text-center');
+            detailsPanel.classList.remove('relative');
+            drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
+            drawPlot(iptmCanvas, iptmCtx, 'iptm');
+        }
+
+        // File upload
+        function handleFileUpload(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            Papa.parse(file, {
+                header: true,
+                dynamicTyping: true,
+                complete: (results) => {
+                    try {
+                        data = results.data.filter(row => 
+                            row.af3_ipsae != null && row.boltz2_ipsae != null &&
+                            row.af3_iptm != null && row.boltz2_iptm != null
+                        ).map(row => ({
+                            ...row,
+                            designMethod: row.designMethod || 'Unknown'
+                        }));
+                        
+                        if (data.length === 0) {
+                            showError('No valid data found in CSV');
+                            data = sampleData;
+                        }
+                        
+                        selectedPoint = null;
+                        clearSelection();
+                        updateUI();
+                        drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
+                        drawPlot(iptmCanvas, iptmCtx, 'iptm');
+                    } catch (err) {
+                        showError('Error parsing CSV: ' + err.message);
+                        data = sampleData;
+                    }
+                },
+                error: (err) => {
+                    showError('Error reading file: ' + err.message);
+                }
+            });
+        }
+
+        // Download CSV
+        function handleDownloadCSV() {
+            const csv = Papa.unparse(data);
+            const blob = new Blob([csv], { type: 'text/csv' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'protein_results.csv';
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+
+        // Event listeners
+        ipsaeCanvas.addEventListener('click', (e) => handleCanvasClick(ipsaeCanvas, e));
+        ipsaeCanvas.addEventListener('mousemove', (e) => handleCanvasMove(ipsaeCanvas, e));
+        ipsaeCanvas.addEventListener('mouseleave', () => {
+            hoveredPoint = null;
+            ipsaeCanvas.style.cursor = 'default';
+            drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
+        });
+
+        iptmCanvas.addEventListener('click', (e) => handleCanvasClick(iptmCanvas, e));
+        iptmCanvas.addEventListener('mousemove', (e) => handleCanvasMove(iptmCanvas, e));
+        iptmCanvas.addEventListener('mouseleave', () => {
+            hoveredPoint = null;
+            iptmCanvas.style.cursor = 'default';
+            drawPlot(iptmCanvas, iptmCtx, 'iptm');
+        });
+
+        uploadBtn.addEventListener('click', () => fileInput.click());
+        fileInput.addEventListener('change', handleFileUpload);
+        downloadBtn.addEventListener('click', handleDownloadCSV);
+
+        // Initialize on load
+        init();
+    </script>
+</body>
+</html>
