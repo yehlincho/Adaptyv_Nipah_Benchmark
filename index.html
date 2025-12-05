@@ -41,12 +41,33 @@
                 </svg>
                 Download CSV
             </button>
+
+            <button id="refreshBtn" class="flex items-center gap-2 px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all shadow-lg hover:shadow-xl font-semibold">
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M1 4v6h6"></path>
+                    <path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"></path>
+                </svg>
+                Reload from GitHub
+            </button>
+            
+            <div id="loadingIndicator" class="flex items-center gap-2 px-4 py-2 bg-blue-900/30 rounded-lg border border-blue-500/30 hidden">
+                <svg class="animate-spin h-4 w-4 text-blue-300" viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span class="text-blue-200 text-sm">Loading from GitHub...</span>
+            </div>
             
             <div id="dataCount" class="ml-auto bg-slate-800 px-5 py-3 rounded-lg shadow-lg hidden border border-purple-500/30">
                 <p class="text-sm text-purple-200">
                     <span id="countValue" class="font-bold text-purple-300 text-lg">0</span> data points
+                    <span id="dataSource" class="text-xs text-purple-400 ml-2"></span>
                 </p>
             </div>
+        </div>
+        
+        <div id="successBox" class="mb-6 p-4 bg-green-900/50 border-l-4 border-green-500 rounded-lg shadow-lg hidden backdrop-blur">
+            <p class="text-sm text-green-200 font-medium">✅ <span id="successText"></span></p>
         </div>
         
         <div id="errorBox" class="mb-6 p-4 bg-red-900/50 border-l-4 border-red-500 rounded-lg shadow-lg hidden backdrop-blur">
@@ -119,13 +140,21 @@
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
         const downloadBtn = document.getElementById('downloadBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
         const errorBox = document.getElementById('errorBox');
         const errorText = document.getElementById('errorText');
+        const successBox = document.getElementById('successBox');
+        const successText = document.getElementById('successText');
+        const loadingIndicator = document.getElementById('loadingIndicator');
         const dataCount = document.getElementById('dataCount');
         const countValue = document.getElementById('countValue');
+        const dataSource = document.getElementById('dataSource');
         const detailsPanel = document.getElementById('detailsPanel');
 
-        // Sample data with NaN fixed - CORRECTED SYNTAX
+        // GitHub CSV URL - UPDATED WITH YOUR ACTUAL GITHUB RAW URL
+        const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/yehlincho/Adaptyv_Nipah_Benchmark/main/nipah_data.csv';
+        
+        // Sample data as fallback
         const sampleData = [
             {"id":"noble-swan-clay","name":"design_16","sequence":"QLVGALRRLAEAARELGEAAAKVIKYLAKAIDAETEEEAEEYREKAVEALEAFREAAVAALEAAAEALRAAAELAKDEEVKKALEEVAELVEEVREEVEAILEQLIEVAKKAGKEEMPEVLKAFAELVAAVTMALAYALRAALSAASAVGDEEAVEAALEAAEALVDALIEVANAVVEELNKAKTEEAKEALKYAAVAVVEAQQAVADSLNRTYWRNSRL","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.916855,"boltz2_iptm":0.9620020389556885,"af3_ipsae":0.717528,"af3_iptm":0.88},
             {"id":"azure-tiger-marble","name":"GVGMWPVGLVVGL","sequence":"GVGMWPVGLVVGL","designMethod":null,"author":"junlong-liu","boltz2_ipsae":0.91417,"boltz2_iptm":0.9660906195640564,"af3_ipsae":0.0,"af3_iptm":0.33},
@@ -150,17 +179,89 @@
         ];
 
         // Initialize
-        function init() {
-            data = sampleData;
-            updateUI();
+        async function init() {
+            showLoading();
+            try {
+                await loadDataFromGitHub();
+                updateUI('GitHub');
+                showSuccess(`Successfully loaded ${data.length} records from GitHub CSV`);
+            } catch (error) {
+                console.warn('Could not load from GitHub, using sample data:', error);
+                data = sampleData;
+                updateUI('sample');
+                showError('Could not load from GitHub. Using sample data. Check console for details.');
+            }
+            hideLoading();
             drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
             drawPlot(iptmCanvas, iptmCtx, 'iptm');
         }
 
-        function updateUI() {
+        // Refresh data from GitHub
+        async function refreshData() {
+            showLoading();
+            try {
+                await loadDataFromGitHub();
+                updateUI('GitHub');
+                showSuccess(`Refreshed! Loaded ${data.length} records from GitHub CSV`);
+                selectedPoint = null;
+                clearSelection();
+                drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
+                drawPlot(iptmCanvas, iptmCtx, 'iptm');
+            } catch (error) {
+                console.warn('Could not refresh from GitHub:', error);
+                showError('Could not refresh from GitHub. Check console for details.');
+            }
+            hideLoading();
+        }
+
+        // Load data from GitHub CSV
+        async function loadDataFromGitHub() {
+            try {
+                const response = await fetch(GITHUB_CSV_URL);
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                const csvText = await response.text();
+                
+                return new Promise((resolve, reject) => {
+                    Papa.parse(csvText, {
+                        header: true,
+                        dynamicTyping: true,
+                        complete: (results) => {
+                            try {
+                                data = results.data.filter(row => 
+                                    row.af3_ipsae != null && row.boltz2_ipsae != null &&
+                                    row.af3_iptm != null && row.boltz2_iptm != null
+                                ).map(row => ({
+                                    ...row,
+                                    designMethod: row.designMethod || 'Unknown'
+                                }));
+                                
+                                if (data.length === 0) {
+                                    throw new Error('No valid data found in GitHub CSV');
+                                }
+                                
+                                console.log(`Loaded ${data.length} records from GitHub CSV`);
+                                resolve();
+                            } catch (err) {
+                                reject(err);
+                            }
+                        },
+                        error: (err) => {
+                            reject(new Error('Error parsing GitHub CSV: ' + err.message));
+                        }
+                    });
+                });
+            } catch (error) {
+                throw new Error('Failed to fetch GitHub CSV: ' + error.message);
+            }
+        }
+
+        function updateUI(source = 'sample') {
             if (data.length > 0) {
                 dataCount.classList.remove('hidden');
                 countValue.textContent = data.length;
+                dataSource.textContent = `(${source})`;
             } else {
                 dataCount.classList.add('hidden');
             }
@@ -169,7 +270,27 @@
         function showError(message) {
             errorText.textContent = message;
             errorBox.classList.remove('hidden');
-            setTimeout(() => errorBox.classList.add('hidden'), 5000);
+            successBox.classList.add('hidden');
+            setTimeout(() => errorBox.classList.add('hidden'), 8000);
+        }
+
+        function showSuccess(message) {
+            successText.textContent = message;
+            successBox.classList.remove('hidden');
+            errorBox.classList.add('hidden');
+            setTimeout(() => successBox.classList.add('hidden'), 5000);
+        }
+
+        function showLoading() {
+            loadingIndicator.classList.remove('hidden');
+            refreshBtn.disabled = true;
+            refreshBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        }
+
+        function hideLoading() {
+            loadingIndicator.classList.add('hidden');
+            refreshBtn.disabled = false;
+            refreshBtn.classList.remove('opacity-50', 'cursor-not-allowed');
         }
 
         // Drawing functions
@@ -494,18 +615,22 @@
                         }));
                         
                         if (data.length === 0) {
-                            showError('No valid data found in CSV');
+                            showError('No valid data found in uploaded CSV');
                             data = sampleData;
+                            updateUI('sample');
+                        } else {
+                            updateUI('uploaded');
+                            showSuccess(`Successfully loaded ${data.length} records from uploaded file`);
                         }
                         
                         selectedPoint = null;
                         clearSelection();
-                        updateUI();
                         drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
                         drawPlot(iptmCanvas, iptmCtx, 'iptm');
                     } catch (err) {
-                        showError('Error parsing CSV: ' + err.message);
+                        showError('Error parsing uploaded CSV: ' + err.message);
                         data = sampleData;
+                        updateUI('sample');
                     }
                 },
                 error: (err) => {
@@ -546,6 +671,7 @@
         uploadBtn.addEventListener('click', () => fileInput.click());
         fileInput.addEventListener('change', handleFileUpload);
         downloadBtn.addEventListener('click', handleDownloadCSV);
+        refreshBtn.addEventListener('click', refreshData);
 
         // Initialize on load
         init();
