@@ -74,15 +74,25 @@
             <p class="text-sm text-red-200 font-medium">⚠ <span id="errorText"></span></p>
         </div>
         
-        <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 mb-6">
-            <div class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-6 border border-purple-500/20">
-                <h3 class="text-xl font-bold text-white mb-4 text-center">ipSAE Comparison</h3>
-                <canvas id="ipsaeCanvas" width="700" height="700" class="border border-slate-700 rounded-lg bg-slate-900/50"></canvas>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+            <div class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-4 border border-purple-500/20">
+                <h3 class="text-lg font-bold text-white mb-3 text-center">AF3 vs Boltz2 ipSAE</h3>
+                <canvas id="ipsaeCanvas" width="600" height="600" class="border border-slate-700 rounded-lg bg-slate-900/50 w-full"></canvas>
             </div>
 
-            <div class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-6 border border-purple-500/20">
-                <h3 class="text-xl font-bold text-white mb-4 text-center">ipTM Comparison</h3>
-                <canvas id="iptmCanvas" width="700" height="700" class="border border-slate-700 rounded-lg bg-slate-900/50"></canvas>
+            <div class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-4 border border-purple-500/20">
+                <h3 class="text-lg font-bold text-white mb-3 text-center">AF3 vs Boltz2 ipTM</h3>
+                <canvas id="iptmCanvas" width="600" height="600" class="border border-slate-700 rounded-lg bg-slate-900/50 w-full"></canvas>
+            </div>
+
+            <div class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-4 border border-purple-500/20">
+                <h3 class="text-lg font-bold text-white mb-3 text-center">Boltz2 ipTM vs ipSAE</h3>
+                <canvas id="boltz2Canvas" width="600" height="600" class="border border-slate-700 rounded-lg bg-slate-900/50 w-full"></canvas>
+            </div>
+
+            <div class="bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-4 border border-purple-500/20">
+                <h3 class="text-lg font-bold text-white mb-3 text-center">AF3 ipTM vs ipSAE</h3>
+                <canvas id="af3Canvas" width="600" height="600" class="border border-slate-700 rounded-lg bg-slate-900/50 w-full"></canvas>
             </div>
         </div>
 
@@ -177,6 +187,10 @@
         const ipsaeCtx = ipsaeCanvas.getContext('2d');
         const iptmCanvas = document.getElementById('iptmCanvas');
         const iptmCtx = iptmCanvas.getContext('2d');
+        const boltz2Canvas = document.getElementById('boltz2Canvas');
+        const boltz2Ctx = boltz2Canvas.getContext('2d');
+        const af3Canvas = document.getElementById('af3Canvas');
+        const af3Ctx = af3Canvas.getContext('2d');
         const fileInput = document.getElementById('fileInput');
         const uploadBtn = document.getElementById('uploadBtn');
         const downloadBtn = document.getElementById('downloadBtn');
@@ -234,8 +248,7 @@
                 showError('Could not load from GitHub. Using sample data. Check console for details.');
             }
             hideLoading();
-            drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
-            drawPlot(iptmCanvas, iptmCtx, 'iptm');
+            redrawAllPlots();
         }
 
         // Refresh data from GitHub
@@ -247,8 +260,6 @@
                 showSuccess(`Refreshed! Loaded ${data.length} records from GitHub CSV`);
                 selectedPoint = null;
                 clearSelection();
-                drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
-                drawPlot(iptmCanvas, iptmCtx, 'iptm');
             } catch (error) {
                 console.warn('Could not refresh from GitHub:', error);
                 showError('Could not refresh from GitHub. Check console for details.');
@@ -386,7 +397,7 @@
         }
 
         // Drawing functions
-        function drawPlot(canvas, ctx, metric) {
+        function drawPlot(canvas, ctx, plotType) {
             const width = canvas.width;
             const height = canvas.height;
             const padding = 80;
@@ -434,16 +445,45 @@
             ctx.lineTo(width - padding, height - padding);
             ctx.stroke();
 
+            // Determine axis labels and metrics based on plot type
+            let xLabel, yLabel, xMetric, yMetric;
+            switch(plotType) {
+                case 'ipsae':
+                    xLabel = 'AF3 ipSAE';
+                    yLabel = 'Boltz2 ipSAE';
+                    xMetric = 'af3_ipsae';
+                    yMetric = 'boltz2_ipsae';
+                    break;
+                case 'iptm':
+                    xLabel = 'AF3 ipTM';
+                    yLabel = 'Boltz2 ipTM';
+                    xMetric = 'af3_iptm';
+                    yMetric = 'boltz2_iptm';
+                    break;
+                case 'boltz2':
+                    xLabel = 'Boltz2 ipSAE';
+                    yLabel = 'Boltz2 ipTM';
+                    xMetric = 'boltz2_ipsae';
+                    yMetric = 'boltz2_iptm';
+                    break;
+                case 'af3':
+                    xLabel = 'AF3 ipSAE';
+                    yLabel = 'AF3 ipTM';
+                    xMetric = 'af3_ipsae';
+                    yMetric = 'af3_iptm';
+                    break;
+            }
+
             // Draw axis labels
             ctx.fillStyle = '#cbd5e1';
             ctx.font = 'bold 16px Space Grotesk';
             ctx.textAlign = 'center';
-            ctx.fillText(`AF3 ${metric === 'ipsae' ? 'ipSAE' : 'ipTM'}`, width / 2, height - 30);
+            ctx.fillText(xLabel, width / 2, height - 30);
             
             ctx.save();
             ctx.translate(30, height / 2);
             ctx.rotate(-Math.PI / 2);
-            ctx.fillText(`Boltz2 ${metric === 'ipsae' ? 'ipSAE' : 'ipTM'}`, 0, 0);
+            ctx.fillText(yLabel, 0, 0);
             ctx.restore();
 
             // Draw tick labels
@@ -468,17 +508,11 @@
                 const isHovered = hoveredPoint !== null && hoveredPoint.index === idx && hoveredPoint.canvas === canvas.id;
                 const isSelected = selectedPoint === idx;
                 
-                let af3Val, boltz2Val;
-                if (metric === 'ipsae') {
-                    af3Val = point.af3_ipsae;
-                    boltz2Val = point.boltz2_ipsae;
-                } else {
-                    af3Val = point.af3_iptm;
-                    boltz2Val = point.boltz2_iptm;
-                }
+                const xVal = point[xMetric];
+                const yVal = point[yMetric];
 
-                const px = padding + af3Val * plotWidth;
-                const py = height - padding - boltz2Val * plotHeight;
+                const px = padding + xVal * plotWidth;
+                const py = height - padding - yVal * plotHeight;
 
                 // Draw point
                 ctx.beginPath();
@@ -521,20 +555,34 @@
 
             let clickedIndex = null;
             let minDist = Infinity;
-            const metric = canvas.id === 'ipsaeCanvas' ? 'ipsae' : 'iptm';
+            
+            // Determine plot type and metrics
+            let xMetric, yMetric;
+            switch(canvas.id) {
+                case 'ipsaeCanvas':
+                    xMetric = 'af3_ipsae';
+                    yMetric = 'boltz2_ipsae';
+                    break;
+                case 'iptmCanvas':
+                    xMetric = 'af3_iptm';
+                    yMetric = 'boltz2_iptm';
+                    break;
+                case 'boltz2Canvas':
+                    xMetric = 'boltz2_ipsae';
+                    yMetric = 'boltz2_iptm';
+                    break;
+                case 'af3Canvas':
+                    xMetric = 'af3_ipsae';
+                    yMetric = 'af3_iptm';
+                    break;
+            }
 
             data.forEach((point, idx) => {
-                let af3Val, boltz2Val;
-                if (metric === 'ipsae') {
-                    af3Val = point.af3_ipsae;
-                    boltz2Val = point.boltz2_ipsae;
-                } else {
-                    af3Val = point.af3_iptm;
-                    boltz2Val = point.boltz2_iptm;
-                }
+                const xVal = point[xMetric];
+                const yVal = point[yMetric];
 
-                const px = padding + af3Val * plotWidth;
-                const py = canvas.height - padding - boltz2Val * plotHeight;
+                const px = padding + xVal * plotWidth;
+                const py = canvas.height - padding - yVal * plotHeight;
                 const dist = Math.sqrt((canvasX - px) ** 2 + (canvasY - py) ** 2);
 
                 if (dist < 15 && dist < minDist) {
@@ -547,8 +595,7 @@
                 selectedPoint = clickedIndex;
                 activeCanvas = canvas.id;
                 showDetails(clickedIndex);
-                drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
-                drawPlot(iptmCanvas, iptmCtx, 'iptm');
+                redrawAllPlots();
             }
         }
 
@@ -568,20 +615,34 @@
 
             let hoveredIndex = null;
             let minDist = Infinity;
-            const metric = canvas.id === 'ipsaeCanvas' ? 'ipsae' : 'iptm';
+            
+            // Determine plot type and metrics
+            let xMetric, yMetric;
+            switch(canvas.id) {
+                case 'ipsaeCanvas':
+                    xMetric = 'af3_ipsae';
+                    yMetric = 'boltz2_ipsae';
+                    break;
+                case 'iptmCanvas':
+                    xMetric = 'af3_iptm';
+                    yMetric = 'boltz2_iptm';
+                    break;
+                case 'boltz2Canvas':
+                    xMetric = 'boltz2_ipsae';
+                    yMetric = 'boltz2_iptm';
+                    break;
+                case 'af3Canvas':
+                    xMetric = 'af3_ipsae';
+                    yMetric = 'af3_iptm';
+                    break;
+            }
 
             data.forEach((point, idx) => {
-                let af3Val, boltz2Val;
-                if (metric === 'ipsae') {
-                    af3Val = point.af3_ipsae;
-                    boltz2Val = point.boltz2_ipsae;
-                } else {
-                    af3Val = point.af3_iptm;
-                    boltz2Val = point.boltz2_iptm;
-                }
+                const xVal = point[xMetric];
+                const yVal = point[yMetric];
 
-                const px = padding + af3Val * plotWidth;
-                const py = canvas.height - padding - boltz2Val * plotHeight;
+                const px = padding + xVal * plotWidth;
+                const py = canvas.height - padding - yVal * plotHeight;
                 const dist = Math.sqrt((canvasX - px) ** 2 + (canvasY - py) ** 2);
 
                 if (dist < 15 && dist < minDist) {
@@ -592,7 +653,16 @@
 
             hoveredPoint = hoveredIndex !== null ? { index: hoveredIndex, canvas: canvas.id } : null;
             canvas.style.cursor = hoveredIndex !== null ? 'pointer' : 'default';
-            drawPlot(canvas, canvas.getContext('2d'), metric);
+            
+            // Get plot type for this canvas
+            let plotType;
+            switch(canvas.id) {
+                case 'ipsaeCanvas': plotType = 'ipsae'; break;
+                case 'iptmCanvas': plotType = 'iptm'; break;
+                case 'boltz2Canvas': plotType = 'boltz2'; break;
+                case 'af3Canvas': plotType = 'af3'; break;
+            }
+            drawPlot(canvas, canvas.getContext('2d'), plotType);
         }
 
         function showDetails(index) {
@@ -682,12 +752,19 @@
                     </svg>
                 </div>
                 <h3 class="text-2xl font-semibold text-purple-200 mb-2">No Point Selected</h3>
-                <p class="text-purple-300/70">Click on any data point in either plot to view its details</p>
+                <p class="text-purple-300/70">Click on any data point in any plot to view its details</p>
             `;
             detailsPanel.classList.add('text-center');
             detailsPanel.classList.remove('relative');
+            redrawAllPlots();
+        }
+
+        // Helper function to redraw all plots
+        function redrawAllPlots() {
             drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
             drawPlot(iptmCanvas, iptmCtx, 'iptm');
+            drawPlot(boltz2Canvas, boltz2Ctx, 'boltz2');
+            drawPlot(af3Canvas, af3Ctx, 'af3');
         }
 
         // File upload
@@ -719,8 +796,6 @@
                         
                         selectedPoint = null;
                         clearSelection();
-                        drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
-                        drawPlot(iptmCanvas, iptmCtx, 'iptm');
                     } catch (err) {
                         showError('Error parsing uploaded CSV: ' + err.message);
                         data = sampleData;
@@ -745,7 +820,7 @@
             URL.revokeObjectURL(url);
         }
 
-        // Event listeners
+        // Event listeners for all 4 canvases
         ipsaeCanvas.addEventListener('click', (e) => handleCanvasClick(ipsaeCanvas, e));
         ipsaeCanvas.addEventListener('mousemove', (e) => handleCanvasMove(ipsaeCanvas, e));
         ipsaeCanvas.addEventListener('mouseleave', () => {
@@ -760,6 +835,22 @@
             hoveredPoint = null;
             iptmCanvas.style.cursor = 'default';
             drawPlot(iptmCanvas, iptmCtx, 'iptm');
+        });
+
+        boltz2Canvas.addEventListener('click', (e) => handleCanvasClick(boltz2Canvas, e));
+        boltz2Canvas.addEventListener('mousemove', (e) => handleCanvasMove(boltz2Canvas, e));
+        boltz2Canvas.addEventListener('mouseleave', () => {
+            hoveredPoint = null;
+            boltz2Canvas.style.cursor = 'default';
+            drawPlot(boltz2Canvas, boltz2Ctx, 'boltz2');
+        });
+
+        af3Canvas.addEventListener('click', (e) => handleCanvasClick(af3Canvas, e));
+        af3Canvas.addEventListener('mousemove', (e) => handleCanvasMove(af3Canvas, e));
+        af3Canvas.addEventListener('mouseleave', () => {
+            hoveredPoint = null;
+            af3Canvas.style.cursor = 'default';
+            drawPlot(af3Canvas, af3Ctx, 'af3');
         });
 
         uploadBtn.addEventListener('click', () => fileInput.click());
