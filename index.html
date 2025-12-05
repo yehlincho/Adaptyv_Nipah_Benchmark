@@ -122,6 +122,48 @@
                 The diagonal lines represent perfect agreement between AF3 and Boltz2 predictions
             </p>
         </div>
+
+        <!-- Sortable Results Table -->
+        <div class="mt-8 bg-slate-800/50 backdrop-blur rounded-2xl shadow-2xl p-6 border border-purple-500/20">
+            <div class="flex justify-between items-center mb-4">
+                <h3 class="text-xl font-bold text-white">📋 Ranked Results</h3>
+                <div class="flex gap-2 text-sm">
+                    <span class="text-purple-300">Sort by:</span>
+                    <select id="sortSelect" class="bg-slate-700 text-white rounded px-2 py-1 text-sm border border-slate-600 focus:border-purple-500 focus:outline-none">
+                        <option value="af3_ipsae">AF3 ipSAE (High to Low)</option>
+                        <option value="af3_ipsae_asc">AF3 ipSAE (Low to High)</option>
+                        <option value="af3_iptm">AF3 ipTM (High to Low)</option>
+                        <option value="af3_iptm_asc">AF3 ipTM (Low to High)</option>
+                        <option value="boltz2_ipsae">Boltz2 ipSAE (High to Low)</option>
+                        <option value="boltz2_ipsae_asc">Boltz2 ipSAE (Low to High)</option>
+                        <option value="boltz2_iptm">Boltz2 ipTM (High to Low)</option>
+                        <option value="boltz2_iptm_asc">Boltz2 ipTM (Low to High)</option>
+                        <option value="name">Name (A-Z)</option>
+                        <option value="author">Author (A-Z)</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div class="overflow-x-auto">
+                <table id="resultsTable" class="w-full text-sm">
+                    <thead>
+                        <tr class="border-b border-slate-600">
+                            <th class="text-left py-3 px-2 text-purple-300 font-semibold">Rank</th>
+                            <th class="text-left py-3 px-3 text-purple-300 font-semibold">Name</th>
+                            <th class="text-left py-3 px-3 text-purple-300 font-semibold">Author</th>
+                            <th class="text-center py-3 px-2 text-blue-300 font-semibold">AF3<br>ipSAE</th>
+                            <th class="text-center py-3 px-2 text-cyan-300 font-semibold">AF3<br>ipTM</th>
+                            <th class="text-center py-3 px-2 text-purple-300 font-semibold">Boltz2<br>ipSAE</th>
+                            <th class="text-center py-3 px-2 text-pink-300 font-semibold">Boltz2<br>ipTM</th>
+                            <th class="text-left py-3 px-3 text-purple-300 font-semibold">Design Method</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Table rows will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
     </div>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -150,6 +192,8 @@
         const countValue = document.getElementById('countValue');
         const dataSource = document.getElementById('dataSource');
         const detailsPanel = document.getElementById('detailsPanel');
+        const sortSelect = document.getElementById('sortSelect');
+        const tableBody = document.getElementById('tableBody');
 
         // GitHub CSV URL - UPDATED WITH YOUR ACTUAL GITHUB RAW URL
         const GITHUB_CSV_URL = 'https://raw.githubusercontent.com/yehlincho/Adaptyv_Nipah_Benchmark/main/nipah_data.csv';
@@ -262,9 +306,59 @@
                 dataCount.classList.remove('hidden');
                 countValue.textContent = data.length;
                 dataSource.textContent = `(${source})`;
+                populateTable();
             } else {
                 dataCount.classList.add('hidden');
             }
+        }
+
+        // Populate and sort the results table
+        function populateTable() {
+            const sortBy = sortSelect.value;
+            const sortedData = sortData([...data], sortBy);
+            
+            tableBody.innerHTML = sortedData.map((item, index) => `
+                <tr class="border-b border-slate-700/50 hover:bg-slate-700/30 transition-colors cursor-pointer" onclick="selectFromTable(${data.indexOf(item)})">
+                    <td class="py-3 px-2 text-purple-200 font-mono text-center">${index + 1}</td>
+                    <td class="py-3 px-3 text-white font-semibold max-w-48 truncate" title="${item.name}">${item.name}</td>
+                    <td class="py-3 px-3 text-purple-200 max-w-32 truncate" title="${item.author}">${item.author}</td>
+                    <td class="py-3 px-2 text-blue-200 font-mono text-center">${item.af3_ipsae.toFixed(3)}</td>
+                    <td class="py-3 px-2 text-cyan-200 font-mono text-center">${item.af3_iptm.toFixed(2)}</td>
+                    <td class="py-3 px-2 text-purple-200 font-mono text-center">${item.boltz2_ipsae.toFixed(3)}</td>
+                    <td class="py-3 px-2 text-pink-200 font-mono text-center">${item.boltz2_iptm.toFixed(2)}</td>
+                    <td class="py-3 px-3 text-slate-300 text-xs max-w-48 truncate" title="${item.designMethod || 'Unknown'}">${item.designMethod || 'Unknown'}</td>
+                </tr>
+            `).join('');
+        }
+
+        // Sort data based on selected criteria
+        function sortData(dataArray, sortBy) {
+            const [metric, order] = sortBy.includes('_asc') ? [sortBy.replace('_asc', ''), 'asc'] : [sortBy, 'desc'];
+            
+            return dataArray.sort((a, b) => {
+                let valueA, valueB;
+                
+                if (metric === 'name' || metric === 'author' || metric === 'designMethod') {
+                    valueA = (a[metric] || '').toLowerCase();
+                    valueB = (b[metric] || '').toLowerCase();
+                    return order === 'asc' ? valueA.localeCompare(valueB) : valueB.localeCompare(valueA);
+                } else {
+                    valueA = a[metric] || 0;
+                    valueB = b[metric] || 0;
+                    return order === 'asc' ? valueA - valueB : valueB - valueA;
+                }
+            });
+        }
+
+        // Select point from table click
+        function selectFromTable(originalIndex) {
+            selectedPoint = originalIndex;
+            showDetails(originalIndex);
+            drawPlot(ipsaeCanvas, ipsaeCtx, 'ipsae');
+            drawPlot(iptmCanvas, iptmCtx, 'iptm');
+            
+            // Scroll to details panel
+            detailsPanel.scrollIntoView({ behavior: 'smooth', block: 'center' });
         }
 
         function showError(message) {
@@ -397,13 +491,13 @@
                     ctx.lineWidth = 3;
                     ctx.stroke();
                 } else if (isHovered) {
-                    ctx.fillStyle = '#a78bfa';
+                    ctx.fillStyle = 'rgba(167, 139, 250, 0.9)';
                     ctx.fill();
                     ctx.strokeStyle = '#fff';
                     ctx.lineWidth = 2;
                     ctx.stroke();
                 } else {
-                    ctx.fillStyle = '#8b5cf6';
+                    ctx.fillStyle = 'rgba(139, 92, 246, 0.6)';
                     ctx.fill();
                 }
             });
@@ -672,6 +766,7 @@
         fileInput.addEventListener('change', handleFileUpload);
         downloadBtn.addEventListener('click', handleDownloadCSV);
         refreshBtn.addEventListener('click', refreshData);
+        sortSelect.addEventListener('change', populateTable);
 
         // Initialize on load
         init();
