@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Protein Design Results - ipSAE & ipTM Comparison</title>
+    <title>Adaptyv Nipah Benchmark - ipSAE & ipTM Comparison</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;600&family=Space+Grotesk:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -18,7 +18,7 @@
 <body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen p-6">
     <div class="max-w-[1800px] mx-auto">
         <div class="mb-8">
-            <h1 class="text-5xl font-bold text-white mb-3 tracking-tight">Protein Design Results</h1>
+            <h1 class="text-5xl font-bold text-white mb-3 tracking-tight">Adaptyv Nipah Benchmark</h1>
             <p class="text-xl text-purple-200">Interactive comparison of AF3 vs Boltz2 predictions</p>
         </div>
         
@@ -125,30 +125,29 @@
         const countValue = document.getElementById('countValue');
         const detailsPanel = document.getElementById('detailsPanel');
 
-        // Sample data with NaN fixed
-        const sampleData = JSON.parse([
-  {"id":"noble-swan-clay","name":"design_16","sequence":"QLVGALRRLAEAARELGEAAAKVIKYLAKAIDAETEEEAEEYREKAVEALEAFREAAVAALEAAAEALRAAAELAKDEEVKKALEEVAELVEEVREEVEAILEQLIEVAKKAGKEEMPEVLKAFAELVAAVTMALAYALRAALSAASAVGDEEAVEAALEAAEALVDALIEVANAVVEELNKAKTEEAKEALKYAAVAVVEAQQAVADSLNRTYWRNSRL","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.916855,"boltz2_iptm":0.9620020389556885,"af3_ipsae":0.717528,"af3_iptm":0.88},
-  {"id":"azure-tiger-marble","name":"GVGMWPVGLVVGL","sequence":"GVGMWPVGLVVGL","designMethod":null,"author":"junlong-liu","boltz2_ipsae":0.91417,"boltz2_iptm":0.9660906195640564,"af3_ipsae":0.0,"af3_iptm":0.33},
-  {"id":"young-ram-cloud","name":"N237_batch_17_121_5","sequence":"EEELIKEYEEKEKEEIEKLLEEMLELLEELAKAAPKLSAEGVKYVQNAAASAREGVETLKELWPLSPSTAVSQLRFHVSVVRRHKKLALAHTGGAGAEAKAIAEEAAEEVRRALEEFKK","designMethod":null,"author":"hanjun3000","boltz2_ipsae":0.883965,"boltz2_iptm":0.9266466498374939,"af3_ipsae":0.72977,"af3_iptm":0.85},
-  {"id":"golden-owl-fern","name":"brisk2","sequence":"DPEKQRIRDEILDIADNSSLEEIKAIAEAIERVLYFEAPNSPETKEILDILDEALKAETKEEAKALLRKALDKIAEHYSLPVLERILREVKRVAEEAK","designMethod":"boltzgen-id-pipeline-8O51Y_zzcm","author":"niki-iva","boltz2_ipsae":0.845811,"boltz2_iptm":0.9265350103378296,"af3_ipsae":0.789749,"af3_iptm":0.89},
-  {"id":"green-bear-sand","name":"8XPY_r1_2445_25","sequence":"SLRDALLAEIERLEKRTEGDEEAAGRLATIKRLLDSYGDKDSVLNIAYQNLRLLYERYFPEEADAFAERIAAANAADRA","designMethod":null,"author":"resh","boltz2_ipsae":0.845621,"boltz2_iptm":0.9480735659599304,"af3_ipsae":0.793164,"af3_iptm":0.92},
-  {"id":"young-raven-lava","name":"seq1","sequence":"STIEILRKYMDWEMTNPDPHDNGNDRLHEHEKAVVDAMKNGQVTTPAAFMAMYVATMTKYPGVTAAQVISEYLIWLSEFLHWTGMPP","designMethod":null,"author":"plato-hunt","boltz2_ipsae":0.845319,"boltz2_iptm":0.9457511305809021,"af3_ipsae":0.012067,"af3_iptm":0.48},
-  {"id":"solid-fox-iron","name":"2vsm_and_rank06_2vsm-bzgen_nfbd3rb_964-refine_20_0_model_0","sequence":"ETVLEAIRIALRGFGMSEKKVDEVVELLRKGEYDRALNLVAISVPEMRSKAVVDLVEALLEGKFDEAIAILEEGFPLNLPEAAARVRELLA","designMethod":"boltzgen","author":"pansapiens","boltz2_ipsae":0.845274,"boltz2_iptm":0.9279040098190308,"af3_ipsae":0.551913,"af3_iptm":0.76},
-  {"id":"shy-bee-bronze","name":"protein_0_energy_15.95","sequence":"MAVKRDSVTKWCWGVLMLLCRTVISKGIVLPPIYWNPSNPKFQPGHGLVLYPQIGDKLDIICPKADSKTVGQDEYYKVFMVDKDQADLCTVKKENPLLNCAKPDGDIKFTIKFQEFSPNLWGLEFRKGKDYYFISTSNGSLEGLKNQEGGVCQTRNMKLLVKVGQDASAAGSTRNKDPVRVPELGPTGRSTTSPNGKPPPSSSSDGNSGGHSFSRSLSEVAAVAGISTGVINFIV","designMethod":"dsm-synteract","author":"jason-gleghorn","boltz2_ipsae":0.845175,"boltz2_iptm":0.8893367052078247,"af3_ipsae":0.0,"af3_iptm":0.16},
-  {"id":"swift-jaguar-cedar","name":"GLHHGLLANPHSGH","sequence":"GLHHGLLANPHSGH","designMethod":null,"author":"pill4monkey","boltz2_ipsae":0.844766,"boltz2_iptm":0.9616991877555847,"af3_ipsae":0.0,"af3_iptm":0.4},
-  {"id":"strong-ant-wave","name":"mellow3","sequence":"SAQAALDRVLDALEEAIKNTKNPEVKKELQRLLFNLLALYGTPEQKIEYALEKLRELLKKYPDDENIHRALAVVEEALAAVK","designMethod":"boltzgen-id-pipeline-8O51Y_zzcm","author":"niki-iva","boltz2_ipsae":0.84385,"boltz2_iptm":0.9369975924491882,"af3_ipsae":0.012292,"af3_iptm":0.54},
-  {"id":"crimson-seal-cedar","name":"NiVG_Binder_42_DivyanB","sequence":"MTYVIDLKGTSGRHKGNTFTVRVTDNSTVRQLEWQIEAITRDKVERILVNGKELRDDETLGSLKDGDVVIVETDGSVFEGTVTIV","designMethod":"boltzgen","author":"divyan-bavan","boltz2_ipsae":0.843843,"boltz2_iptm":0.9381635785102844,"af3_ipsae":0.766672,"af3_iptm":0.87},
-  {"id":"golden-bison-reed","name":"sequence_IFILTER_24","sequence":"EEELIAAYEARRQAELAALQAKIDELLALLDELGASKYAKLRTELKDEFAAAKEDPRLRIFLDGVVDRYIKELKAELAAATA","designMethod":"rfdiffusion-full-partial-pmpnn-af-boltz-valid-rosetta-filtering-ptpKPMSZsV","author":"max-beining","boltz2_ipsae":0.843788,"boltz2_iptm":0.9358406066894531,"af3_ipsae":0.798416,"af3_iptm":0.89},
-  {"id":"gentle-bison-marble","name":"design_15","sequence":"SDEELAVEISQLIVEINGLLAQVAAYVARIEASALALLYGKDNPKVKEWGELAVRLAQDIADAALWQAKREARKILRAVKAGNGPEANQKGVELLKLQVEFLEAAVEAALAVADLALKGLEDKENRKEYARATDLAAKAALLVLAAAAKWGPSPELTEALRYVAEAAREGLETGNAVELAEEALEAVEEVVWENWDEWGGWGGGYWGFRGHLALLDMLPL","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.843558,"boltz2_iptm":0.9349384903907776,"af3_ipsae":0.667776,"af3_iptm":0.85},
-  {"id":"golden-seal-thorn","name":"final_design_8","sequence":"SAADVQAEREAKFEEGVKLVREGVELAKSGKVSGEEAGEIAYKGVELMREADGSGELTIELSLARKAAEGARNVDKDGEKGLEIAVTNAEQLGKLLGIPPQ","designMethod":"protein-hunter-lTFCU0CjiQ","author":"esputnam","boltz2_ipsae":0.88165,"boltz2_iptm":0.9324806928634644,"af3_ipsae":0.732106,"af3_iptm":0.85},
-  {"id":"quiet-crane-lava","name":"design0","sequence":"SLAALAAALADALRALLAALSPAEAATVARAIAAASLTSPAGRLDVLALNRAAALAAAGDREAAAETAAAAARAALLAAKNDFEAGTTAADLVNGVAAGLSRIPSVPAEAVAIAKEAAKEAEKAAMEGDALKALRIAAEGLARAAALIAA","designMethod":"boltzgen","author":"contact-crafter","boltz2_ipsae":0.84331,"boltz2_iptm":0.9255475997924805,"af3_ipsae":0.851767,"af3_iptm":0.92},
-  {"id":"jade-ox-rose","name":"E2SC","sequence":"MLEELKERLEALLNSYKPKLIETLTKIDEGKLAPLSIYSVLNPLDLEIVKILVEAGFSEEEAKEIVSEAFDRTELKMSKISHTLSNEEYVEEFLRTLLEEIMKLVEEKLK","designMethod":null,"author":"tadej","boltz2_ipsae":0.843155,"boltz2_iptm":0.9297827482223511,"af3_ipsae":0.751972,"af3_iptm":0.88},
-  {"id":"deep-heron-cedar","name":"GAGHHHALLHRP","sequence":"GAGHHHALLHRP","designMethod":null,"author":"624465921","boltz2_ipsae":0.843096,"boltz2_iptm":0.9538766741752625,"af3_ipsae":0.013746,"af3_iptm":0.45},
-  {"id":"dark-bear-frost","name":"N1029","sequence":"EEELIAEYEARRAAELAALAAEIAELKALIAKLGEAKYASLIAQLDDEFAAAQEDPRLRIFLRAVVKLHIKRLKAELAAAGL","designMethod":null,"author":"driegerdesign","boltz2_ipsae":0.842861,"boltz2_iptm":0.9406288862228394,"af3_ipsae":0.802063,"af3_iptm":0.9},
-  {"id":"jade-swan-thorn","name":"design_23","sequence":"EELAAAIEALIQAAAALSNEPEEVRLALTEYLEALIGELPEAIAKAIAGVLNEEEEEEAKVLERALAAAATAYNEAPELKEMVEELLKQITAPIQPTVKLAIKGLGAEAERGVKAALQIAATLANALPEIEAKLQEAKETLKPEAEQKMVELQEELEESVRQLLEAQLELEAPEDAELSELSKELKDAFEAEIAKAAEAVPAEVAAALEKLVEQAKEANPAPEAAAEELKSLLEAALAEKKKGKQGKKGK","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.842813,"boltz2_iptm":0.9219002723693848,"af3_ipsae":0.667067,"af3_iptm":0.82},
-  {"id":"swift-lion-pine","name":"c13_B","sequence":"MQIFVVTPDGKTFEIEVEPSDTLLNVVEKVEKEHGYGNQFVAAVEFAGKVYPLSKTLSEMGIQKGSTLHFLAG","designMethod":"boltzgen-id-pipeline-_rUcc_6Mw-","author":"niki-iva","boltz2_ipsae":0.840977,"boltz2_iptm":0.9342098832130432,"af3_ipsae":0.0,"af3_iptm":0.16}
-]
-);
+        // Sample data with NaN fixed - CORRECTED SYNTAX
+        const sampleData = [
+            {"id":"noble-swan-clay","name":"design_16","sequence":"QLVGALRRLAEAARELGEAAAKVIKYLAKAIDAETEEEAEEYREKAVEALEAFREAAVAALEAAAEALRAAAELAKDEEVKKALEEVAELVEEVREEVEAILEQLIEVAKKAGKEEMPEVLKAFAELVAAVTMALAYALRAALSAASAVGDEEAVEAALEAAEALVDALIEVANAVVEELNKAKTEEAKEALKYAAVAVVEAQQAVADSLNRTYWRNSRL","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.916855,"boltz2_iptm":0.9620020389556885,"af3_ipsae":0.717528,"af3_iptm":0.88},
+            {"id":"azure-tiger-marble","name":"GVGMWPVGLVVGL","sequence":"GVGMWPVGLVVGL","designMethod":null,"author":"junlong-liu","boltz2_ipsae":0.91417,"boltz2_iptm":0.9660906195640564,"af3_ipsae":0.0,"af3_iptm":0.33},
+            {"id":"young-ram-cloud","name":"N237_batch_17_121_5","sequence":"EEELIKEYEEKEKEEIEKLLEEMLELLEELAKAAPKLSAEGVKYVQNAAASAREGVETLKELWPLSPSTAVSQLRFHVSVVRRHKKLALAHTGGAGAEAKAIAEEAAEEVRRALEEFKK","designMethod":null,"author":"hanjun3000","boltz2_ipsae":0.883965,"boltz2_iptm":0.9266466498374939,"af3_ipsae":0.72977,"af3_iptm":0.85},
+            {"id":"golden-owl-fern","name":"brisk2","sequence":"DPEKQRIRDEILDIADNSSLEEIKAIAEAIERVLYFEAPNSPETKEILDILDEALKAETKEEAKALLRKALDKIAEHYSLPVLERILREVKRVAEEAK","designMethod":"boltzgen-id-pipeline-8O51Y_zzcm","author":"niki-iva","boltz2_ipsae":0.845811,"boltz2_iptm":0.9265350103378296,"af3_ipsae":0.789749,"af3_iptm":0.89},
+            {"id":"green-bear-sand","name":"8XPY_r1_2445_25","sequence":"SLRDALLAEIERLEKRTEGDEEAAGRLATIKRLLDSYGDKDSVLNIAYQNLRLLYERYFPEEADAFAERIAAANAADRA","designMethod":null,"author":"resh","boltz2_ipsae":0.845621,"boltz2_iptm":0.9480735659599304,"af3_ipsae":0.793164,"af3_iptm":0.92},
+            {"id":"young-raven-lava","name":"seq1","sequence":"STIEILRKYMDWEMTNPDPHDNGNDRLHEHEKAVVDAMKNGQVTTPAAFMAMYVATMTKYPGVTAAQVISEYLIWLSEFLHWTGMPP","designMethod":null,"author":"plato-hunt","boltz2_ipsae":0.845319,"boltz2_iptm":0.9457511305809021,"af3_ipsae":0.012067,"af3_iptm":0.48},
+            {"id":"solid-fox-iron","name":"2vsm_and_rank06_2vsm-bzgen_nfbd3rb_964-refine_20_0_model_0","sequence":"ETVLEAIRIALRGFGMSEKKVDEVVELLRKGEYDRALNLVAISVPEMRSKAVVDLVEALLEGKFDEAIAILEEGFPLNLPEAAARVRELLA","designMethod":"boltzgen","author":"pansapiens","boltz2_ipsae":0.845274,"boltz2_iptm":0.9279040098190308,"af3_ipsae":0.551913,"af3_iptm":0.76},
+            {"id":"shy-bee-bronze","name":"protein_0_energy_15.95","sequence":"MAVKRDSVTKWCWGVLMLLCRTVISKGIVLPPIYWNPSNPKFQPGHGLVLYPQIGDKLDIICPKADSKTVGQDEYYKVFMVDKDQADLCTVKKENPLLNCAKPDGDIKFTIKFQEFSPNLWGLEFRKGKDYYFISTSNGSLEGLKNQEGGVCQTRNMKLLVKVGQDASAAGSTRNKDPVRVPELGPTGRSTTSPNGKPPPSSSSDGNSGGHSFSRSLSEVAAVAGISTGVINFIV","designMethod":"dsm-synteract","author":"jason-gleghorn","boltz2_ipsae":0.845175,"boltz2_iptm":0.8893367052078247,"af3_ipsae":0.0,"af3_iptm":0.16},
+            {"id":"swift-jaguar-cedar","name":"GLHHGLLANPHSGH","sequence":"GLHHGLLANPHSGH","designMethod":null,"author":"pill4monkey","boltz2_ipsae":0.844766,"boltz2_iptm":0.9616991877555847,"af3_ipsae":0.0,"af3_iptm":0.4},
+            {"id":"strong-ant-wave","name":"mellow3","sequence":"SAQAALDRVLDALEEAIKNTKNPEVKKELQRLLFNLLALYGTPEQKIEYALEKLRELLKKYPDDENIHRALAVVEEALAAVK","designMethod":"boltzgen-id-pipeline-8O51Y_zzcm","author":"niki-iva","boltz2_ipsae":0.84385,"boltz2_iptm":0.9369975924491882,"af3_ipsae":0.012292,"af3_iptm":0.54},
+            {"id":"crimson-seal-cedar","name":"NiVG_Binder_42_DivyanB","sequence":"MTYVIDLKGTSGRHKGNTFTVRVTDNSTVRQLEWQIEAITRDKVERILVNGKELRDDETLGSLKDGDVVIVETDGSVFEGTVTIV","designMethod":"boltzgen","author":"divyan-bavan","boltz2_ipsae":0.843843,"boltz2_iptm":0.9381635785102844,"af3_ipsae":0.766672,"af3_iptm":0.87},
+            {"id":"golden-bison-reed","name":"sequence_IFILTER_24","sequence":"EEELIAAYEARRQAELAALQAKIDELLALLDELGASKYAKLRTELKDEFAAAKEDPRLRIFLDGVVDRYIKELKAELAAATA","designMethod":"rfdiffusion-full-partial-pmpnn-af-boltz-valid-rosetta-filtering-ptpKPMSZsV","author":"max-beining","boltz2_ipsae":0.843788,"boltz2_iptm":0.9358406066894531,"af3_ipsae":0.798416,"af3_iptm":0.89},
+            {"id":"gentle-bison-marble","name":"design_15","sequence":"SDEELAVEISQLIVEINGLLAQVAAYVARIEASALALLYGKDNPKVKEWGELAVRLAQDIADAALWQAKREARKILRAVKAGNGPEANQKGVELLKLQVEFLEAAVEAALAVADLALKGLEDKENRKEYARATDLAAKAALLVLAAAAKWGPSPELTEALRYVAEAAREGLETGNAVELAEEALEAVEEVVWENWDEWGGWGGGYWGFRGHLALLDMLPL","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.843558,"boltz2_iptm":0.9349384903907776,"af3_ipsae":0.667776,"af3_iptm":0.85},
+            {"id":"golden-seal-thorn","name":"final_design_8","sequence":"SAADVQAEREAKFEEGVKLVREGVELAKSGKVSGEEAGEIAYKGVELMREADGSGELTIELSLARKAAEGARNVDKDGEKGLEIAVTNAEQLGKLLGIPPQ","designMethod":"protein-hunter-lTFCU0CjiQ","author":"esputnam","boltz2_ipsae":0.88165,"boltz2_iptm":0.9324806928634644,"af3_ipsae":0.732106,"af3_iptm":0.85},
+            {"id":"quiet-crane-lava","name":"design0","sequence":"SLAALAAALADALRALLAALSPAEAATVARAIAAASLTSPAGRLDVLALNRAAALAAAGDREAAAETAAAAARAALLAAKNDFEAGTTAADLVNGVAAGLSRIPSVPAEAVAIAKEAAKEAEKAAMEGDALKALRIAAEGLARAAALIAA","designMethod":"boltzgen","author":"contact-crafter","boltz2_ipsae":0.84331,"boltz2_iptm":0.9255475997924805,"af3_ipsae":0.851767,"af3_iptm":0.92},
+            {"id":"jade-ox-rose","name":"E2SC","sequence":"MLEELKERLEALLNSYKPKLIETLTKIDEGKLAPLSIYSVLNPLDLEIVKILVEAGFSEEEAKEIVSEAFDRTELKMSKISHTLSNEEYVEEFLRTLLEEIMKLVEEKLK","designMethod":null,"author":"tadej","boltz2_ipsae":0.843155,"boltz2_iptm":0.9297827482223511,"af3_ipsae":0.751972,"af3_iptm":0.88},
+            {"id":"deep-heron-cedar","name":"GAGHHHALLHRP","sequence":"GAGHHHALLHRP","designMethod":null,"author":"624465921","boltz2_ipsae":0.843096,"boltz2_iptm":0.9538766741752625,"af3_ipsae":0.013746,"af3_iptm":0.45},
+            {"id":"dark-bear-frost","name":"N1029","sequence":"EEELIAEYEARRAAELAALAAEIAELKALIAKLGEAKYASLIAQLDDEFAAAQEDPRLRIFLRAVVKLHIKRLKAELAAAGL","designMethod":null,"author":"driegerdesign","boltz2_ipsae":0.842861,"boltz2_iptm":0.9406288862228394,"af3_ipsae":0.802063,"af3_iptm":0.9},
+            {"id":"jade-swan-thorn","name":"design_23","sequence":"EELAAAIEALIQAAAALSNEPEEVRLALTEYLEALIGELPEAIAKAIAGVLNEEEEEEAKVLERALAAAATAYNEAPELKEMVEELLKQITAPIQPTVKLAIKGLGAEAERGVKAALQIAATLANALPEIEAKLQEAKETLKPEAEQKMVELQEELEESVRQLLEAQLELEAPEDAELSELSKELKDAFEAEIAKAAEAVPAEVAAALEKLVEQAKEANPAPEAAAEELKSLLEAALAEKKKGKQGKKGK","designMethod":"mosaic","author":"nboyd","boltz2_ipsae":0.842813,"boltz2_iptm":0.9219002723693848,"af3_ipsae":0.667067,"af3_iptm":0.82},
+            {"id":"swift-lion-pine","name":"c13_B","sequence":"MQIFVVTPDGKTFEIEVEPSDTLLNVVEKVEKEHGYGNQFVAAVEFAGKVYPLSKTLSEMGIQKGSTLHFLAG","designMethod":"boltzgen-id-pipeline-_rUcc_6Mw-","author":"niki-iva","boltz2_ipsae":0.840977,"boltz2_iptm":0.9342098832130432,"af3_ipsae":0.0,"af3_iptm":0.16}
+        ];
 
         // Initialize
         function init() {
@@ -522,7 +521,7 @@
             const url = URL.createObjectURL(blob);
             const a = document.createElement('a');
             a.href = url;
-            a.download = 'protein_results.csv';
+            a.download = 'nipah_benchmark_results.csv';
             a.click();
             URL.revokeObjectURL(url);
         }
