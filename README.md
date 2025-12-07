@@ -7,3 +7,4 @@ This repository contains computational analysis and model comparison for designs
 ## Overview
 - Repredicting all submitted binder designs using AF3
 - Comparing scoring behavior across different computational models (Boltz 2 vs AF3)
+- Disclaimer: Single-sequence mode for binder; results may not be optimal for non-de novo proteins.
